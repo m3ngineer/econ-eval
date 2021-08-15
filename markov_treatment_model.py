@@ -14,37 +14,96 @@ treatment_matrix = {
 }
 
 payoffs = {
-    'a': {'costs': [5000,12000,0],
+    'a': {'cost': [5000,12000,0],
             'utility': [0.6,0.2,0]},
-    'b': {'costs': [4000,10000,0],
+    'b': {'cost': [4000,10000,0],
             'utility': [0.8,0.5,0]},
 }
 
-def calc_members(membership, treatment_matrix):
-    return np.dot(membership, treatment_matrix)
+class MarkovModel():
+    ''' Instantiate a simple Markov Model '''
+    def __init__(self):
+        self.membership = list()
+        self.treatments = {}
+        self.payoffs = {}
+        self.cycles = None
+        self.results_ = None
 
-def calc_costs(membership, costs):
-    return np.multiply(membership, costs).tolist()
+    def add_param(self, type, data, name):
+        ''' Input a condition or parameter into model '''
 
-def calc_qalys(membership, qalys):
-    return np.multiply(membership, qalys).tolist()
+        if type == 'treatment':
+            self.treatments[name] = data
+        elif type == 'cost':
+            if name not in self.payoffs.keys():
+                self.payoffs[name] = {}
+            self.payoffs[name]['cost'] = data
+        elif type == 'utility':
+            if name not in self.payoffs.keys():
+                self.payoffs[name] = {}
+            self.payoffs[name]['utility'] = data
+        else:
+            raise('Option not available. Type should be treatment, cost, or utility.')
 
-# Cycle 0
-memberships = [STATE_MEMBERSHIP]
-costs = [payoffs['a']['costs']]
-qalys = [payoffs['a']['utility']]
-cycle_membership, cycle_costs, cycle_qalys = STATE_MEMBERSHIP, costs, qalys
+        return True
 
-for cycle in range(1, CYCLES):
-    cycle_membership = calc_members(cycle_membership,treatment_matrix['a'])
-    memberships.append(cycle_membership)
-    cycle_costs = calc_costs(cycle_membership, payoffs['a']['costs'])
-    costs.append(cycle_costs)
-    cycle_qalys = calc_qalys(cycle_membership, payoffs['a']['utility'])
-    qalys.append(cycle_qalys)
+    def _calc_members(self, membership, treatment_name):
+        self.membership = membership
+        return np.dot(membership, self.treatments[treatment_name])
 
-result = {
-    'membership': memberships,
-    'costs': costs,
-    'qalys': qalys,
-}
+    def _calc_costs(self, membership, cost_name):
+        return np.multiply(membership, self.payoffs[cost_name]['cost']).tolist()
+
+    def _calc_qalys(self, membership, utility_name):
+        return np.multiply(membership, self.payoffs[utility_name]['utility']).tolist()
+
+    def run(self, membership, name, cycles):
+        ''' Runs model '''
+
+        # Cycle 0
+        cycle_membership, cycle_cost, cycle_qaly = membership, self.payoffs[name]['cost'], self.payoffs[name]['utility']
+        outcome_membership = [membership]
+        outcome_cost = [cycle_cost]
+        outcome_qaly = [cycle_qaly]
+
+        for cycle in range(1, cycles):
+            cycle_membership = self._calc_members(cycle_membership, name)
+            outcome_membership.append(cycle_membership)
+            cycle_cost = self._calc_costs(cycle_membership, name)
+            outcome_cost.append(cycle_cost)
+            cycle_qaly = self._calc_qalys(cycle_membership, name)
+            outcome_qaly.append(cycle_qaly)
+
+        self.results_ = {
+                'membership': outcome_membership,
+                'cost': outcome_cost,
+                'qaly': outcome_qaly,
+                }
+        print(self.results_)
+        return self.results_
+
+    def score(self):
+
+        if self.results_ is not None:
+            colnames = ['Healthy', 'Diseased', 'Dead']
+            print('\nMembership\n')
+            print(pd.DataFrame(self.results_['membership'], columns=colnames))
+            print('\n--------------------------------------\n')
+            print('\nCost\n')
+            print(pd.DataFrame(self.results_['cost'], columns=colnames))
+            print('\n--------------------------------------\n')
+            print('\nUtility\n')
+            print(pd.DataFrame(self.results_['qaly'], columns=colnames))
+            print('\n--------------------------------------\n')
+        else:
+            return None
+
+if __name__ == '__main__':
+
+    markov = MarkovModel()
+    for treatment in ['a', 'b']:
+        markov.add_param('treatment', treatment_matrix[treatment], treatment)
+        markov.add_param('cost', payoffs[treatment]['cost'], treatment)
+        markov.add_param('utility', payoffs[treatment]['utility'], treatment)
+    res = markov.run(STATE_MEMBERSHIP, 'a', CYCLES)
+    markov.score()
