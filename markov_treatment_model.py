@@ -84,10 +84,20 @@ class MarkovModel():
 
     def score(self):
 
+        def _construct_table(data, colnames, treatment_names):
+            ''' Builds a table of results for comparing treatments '''
+
+            result = pd.DataFrame()
+            for i, dat in enumerate(data):
+                colnames = [col+'_'+treatment_names[i] for col in colnames]
+                result = pd.concat([result, pd.DataFrame(dat, columns=colnames)], axis=0)
+            return result
+
         if self.results_ is not None:
             colnames = ['Healthy', 'Diseased', 'Dead']
+            res = _construct_table([self.results_['membership']], colnames, ['a'])
             print('\nMembership\n')
-            print(pd.DataFrame(self.results_['membership'], columns=colnames))
+            print(res)
             print('\n--------------------------------------\n')
             print('\nCost\n')
             print(pd.DataFrame(self.results_['cost'], columns=colnames))
@@ -106,4 +116,7 @@ if __name__ == '__main__':
         markov.add_param('cost', payoffs[treatment]['cost'], treatment)
         markov.add_param('utility', payoffs[treatment]['utility'], treatment)
     res = markov.run(STATE_MEMBERSHIP, 'a', CYCLES)
+    markov.score()
+
+    markov.run(STATE_MEMBERSHIP, 'b', CYCLES)
     markov.score()
