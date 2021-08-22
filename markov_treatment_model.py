@@ -49,7 +49,7 @@ class MarkovModel():
 
     def _calc_members(self, membership, treatment_name):
         self.membership = membership
-        return np.dot(membership, self.treatments[treatment_name])
+        return np.dot(membership, self.treatments[treatment_name]).tolist()
 
     def _calc_costs(self, membership, cost_name):
         return np.multiply(membership, self.payoffs[cost_name]['cost']).tolist()
@@ -79,25 +79,26 @@ class MarkovModel():
                 'cost': outcome_cost,
                 'qaly': outcome_qaly,
                 }
-        print(self.results_)
         return self.results_
+
+    def _construct_table(self, data, colnames, treatment_names):
+        ''' Builds a table of results for comparing treatments '''
+
+        result = pd.DataFrame()
+
+        for treatment_name in treatment_names:
+            colnames = [col+'_'+treatment_name for col in colnames]
+            for i, dat in enumerate(data):
+
+                result = pd.concat([result, pd.DataFrame([dat], columns=colnames)], axis=0)
+        return result.reset_index(drop=True)
 
     def score(self):
 
-        def _construct_table(data, colnames, treatment_names):
-            ''' Builds a table of results for comparing treatments '''
-
-            result = pd.DataFrame()
-            for i, dat in enumerate(data):
-                colnames = [col+'_'+treatment_names[i] for col in colnames]
-                result = pd.concat([result, pd.DataFrame(dat, columns=colnames)], axis=0)
-            return result
-
         if self.results_ is not None:
             colnames = ['Healthy', 'Diseased', 'Dead']
-            res = _construct_table([self.results_['membership']], colnames, ['a'])
+            res = self._construct_table([self.results_['membership']], colnames, ['a'])
             print('\nMembership\n')
-            print(res)
             print('\n--------------------------------------\n')
             print('\nCost\n')
             print(pd.DataFrame(self.results_['cost'], columns=colnames))
@@ -108,6 +109,18 @@ class MarkovModel():
         else:
             return None
 
+    def compare_treatments(self, model1, model2):
+        ''' Given a set of parameters get the best model '''
+
+        colnames = ['Healthy', 'Diseased', 'Dead']
+        for metric in ['membership', 'cost', 'qaly']:
+            res = self._construct_table(model1[metric], colnames, ['a'])
+            res2 = self._construct_table(model2[metric], colnames, ['b'])
+
+            print('\n{}'.format(metric.title()))
+            print('\n--------------------------------------\n')
+            print(pd.concat([res, res2], axis=1))
+
 if __name__ == '__main__':
 
     markov = MarkovModel()
@@ -115,8 +128,9 @@ if __name__ == '__main__':
         markov.add_param('treatment', treatment_matrix[treatment], treatment)
         markov.add_param('cost', payoffs[treatment]['cost'], treatment)
         markov.add_param('utility', payoffs[treatment]['utility'], treatment)
-    res = markov.run(STATE_MEMBERSHIP, 'a', CYCLES)
-    markov.score()
+    m1 = markov.run(STATE_MEMBERSHIP, 'a', CYCLES)
+    # markov.score()
 
-    markov.run(STATE_MEMBERSHIP, 'b', CYCLES)
-    markov.score()
+    m2 = markov.run(STATE_MEMBERSHIP, 'b', CYCLES)
+    # markov.score()
+    print(markov.compare_treatments(m1, m2))
