@@ -75,6 +75,8 @@ class MarkovModel():
             outcome_qaly.append(cycle_qaly)
 
         self.results_ = {
+                'name': name,
+                'cycles': cycles,
                 'membership': outcome_membership,
                 'cost': outcome_cost,
                 'qaly': outcome_qaly,
@@ -84,6 +86,8 @@ class MarkovModel():
     def _construct_table(self, data, colnames, treatment_names):
         ''' Builds a table of results for comparing treatments '''
 
+        if type(treatment_names) == str:
+            treatment_names = [treatment_names]
         result = pd.DataFrame()
 
         for treatment_name in treatment_names:
@@ -114,8 +118,8 @@ class MarkovModel():
 
         colnames = ['Healthy', 'Diseased', 'Dead']
         for metric in ['membership', 'cost', 'qaly']:
-            res = self._construct_table(model1[metric], colnames, ['a'])
-            res2 = self._construct_table(model2[metric], colnames, ['b'])
+            res = self._construct_table(model1[metric], colnames, model1['name'])
+            res2 = self._construct_table(model2[metric], colnames, model2['name'])
 
             print('\n{}'.format(metric.title()))
             print('\n--------------------------------------\n')
