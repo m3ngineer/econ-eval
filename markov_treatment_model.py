@@ -93,7 +93,6 @@ class MarkovModel():
         for treatment_name in treatment_names:
             colnames = [col+'_'+treatment_name for col in colnames]
             for i, dat in enumerate(data):
-
                 result = pd.concat([result, pd.DataFrame([dat], columns=colnames)], axis=0)
         return result.reset_index(drop=True)
 
@@ -101,14 +100,14 @@ class MarkovModel():
 
         if self.results_ is not None:
             colnames = ['Healthy', 'Diseased', 'Dead']
-            res = self._construct_table([self.results_['membership']], colnames, ['a'])
             print('\nMembership\n')
             print('\n--------------------------------------\n')
+            print(self._construct_table(self.results_['membership'], colnames, self.results_['name']))
             print('\nCost\n')
-            print(pd.DataFrame(self.results_['cost'], columns=colnames))
+            print(self._construct_table(self.results_['cost'], colnames, self.results_['name']))
             print('\n--------------------------------------\n')
             print('\nUtility\n')
-            print(pd.DataFrame(self.results_['qaly'], columns=colnames))
+            print(self._construct_table(self.results_['qaly'], colnames, self.results_['name']))
             print('\n--------------------------------------\n')
         else:
             return None
@@ -133,7 +132,7 @@ if __name__ == '__main__':
         markov.add_param('cost', payoffs[treatment]['cost'], treatment)
         markov.add_param('utility', payoffs[treatment]['utility'], treatment)
     m1 = markov.run(STATE_MEMBERSHIP, 'a', CYCLES)
-    # markov.score()
+    markov.score()
 
     m2 = markov.run(STATE_MEMBERSHIP, 'b', CYCLES)
     # markov.score()
