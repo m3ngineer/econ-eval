@@ -126,6 +126,28 @@ class MarkovModel():
 
 if __name__ == '__main__':
 
+    #aducanumab settings
+    # https://link.springer.com/article/10.1007%2Fs40120-021-00273-0#Sec25
+    # healthy to AD dementia, moderate AD or worse, death
+    treatment_matrix = {
+        'soc': [[0.678,0.477,0.138],
+                [0.2,0.6,0.2],
+                [0,0,1]],
+        'aducanumab': [[0.532,0.318,0.166],
+                [0.1,0.6,0.3],
+                [0,0,1]],
+    }
+
+    # MCI, Mild AD dementia, moderate AD dementia, Severe AD dementia
+    payoffs = {
+        'soc': {'cost': [5000,12000,0],
+                'utility': [0.8,0.74,0.59,0.36,0.00]},
+        'aducanumab': {'cost': [4000,10000,0],
+                'utility': [0.8,0.74,0.59,0.36,0.00]},
+    }
+    CYCLES = 10 #years
+
+
     markov = MarkovModel()
     for treatment in ['a', 'b']:
         markov.add_param('treatment', treatment_matrix[treatment], treatment)
