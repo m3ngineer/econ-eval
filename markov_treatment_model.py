@@ -28,6 +28,7 @@ class MarkovModel():
         self.payoffs = {}
         self.cycles = None
         self.results_ = None
+        self.state_names = self.set_states(['Healthy', 'Diseased', 'Dead'])
 
     def add_param(self, type, data, name):
         ''' Input a condition or parameter into model '''
@@ -46,6 +47,9 @@ class MarkovModel():
             raise('Option not available. Type should be treatment, cost, or utility.')
 
         return True
+
+    def set_states(self, states):
+        self.state_names = states
 
     def _calc_members(self, membership, treatment_name):
         self.membership = membership
@@ -94,21 +98,20 @@ class MarkovModel():
             colnames = [col+'_'+treatment_name for col in colnames]
             for i, dat in enumerate(data):
                 result = pd.concat([result, pd.DataFrame([dat], columns=colnames)], axis=0)
-        return result.reset_index(drop=True)
+        return result.reset_index(drop=True).round(2)
 
     def score(self):
 
         if self.results_ is not None:
-            colnames = ['Healthy', 'Diseased', 'Dead']
             print('\nMembership\n')
+            print(self._construct_table(self.results_['membership'], self.state_names, self.results_['name']))
             print('\n--------------------------------------\n')
-            print(self._construct_table(self.results_['membership'], colnames, self.results_['name']))
             print('\nCost\n')
-            print(self._construct_table(self.results_['cost'], colnames, self.results_['name']))
+            print(self._construct_table(self.results_['cost'], self.state_names, self.results_['name']))
             print('\n--------------------------------------\n')
             print('\nUtility\n')
-            print(self._construct_table(self.results_['qaly'], colnames, self.results_['name']))
-            print('\n--------------------------------------\n')
+            print(self._construct_table(self.results_['qaly'], self.state_names, self.results_['name']))
+            print('\n')
         else:
             return None
 
@@ -128,11 +131,12 @@ if __name__ == '__main__':
 
     #aducanumab settings
     # https://link.springer.com/article/10.1007%2Fs40120-021-00273-0#Sec25
-    # healthy to AD dementia, moderate AD or worse, death
+    # healthy, MCI due to AD, mild AD, moderate AD, severe AD
     treatment_matrix = {
-        'soc': [[0.678,0.477,0.138],
-                [0.2,0.6,0.2],
-                [0,0,1]],
+        'soc': [[0.77,0.23,0,0],
+                [0.03,0.58,0.35,0.04],
+                [0,0.03,0.55,0.42],
+                [0,0,0.02,0.98]],
         'aducanumab': [[0.532,0.318,0.166],
                 [0.1,0.6,0.3],
                 [0,0,1]],
@@ -141,8 +145,8 @@ if __name__ == '__main__':
     # MCI, Mild AD dementia, moderate AD dementia, Severe AD dementia
     payoffs = {
         'soc': {'cost': [5000,12000,0],
-                'utility': [0.8,0.74,0.59,0.36,0.00]},
-        'aducanumab': {'cost': [4000,10000,0],
+                'utility': [0.73,0.68,0.54,0.37]},
+        'aducanumab': {'cost': [34825,34825,34825,34825,34825],
                 'utility': [0.8,0.74,0.59,0.36,0.00]},
     }
     CYCLES = 10 #years
