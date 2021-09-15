@@ -67,8 +67,8 @@ class MarkovModel():
         # Cycle 0
         cycle_membership, cycle_cost, cycle_qaly = membership, self.payoffs[name]['cost'], self.payoffs[name]['utility']
         outcome_membership = [membership]
-        outcome_cost = [cycle_cost]
-        outcome_qaly = [cycle_qaly]
+        outcome_cost = np.multiply(outcome_membership, [cycle_cost]).tolist()
+        outcome_qaly = np.multiply(outcome_membership, [cycle_qaly]).tolist()
 
         for cycle in range(1, cycles):
             cycle_membership = self._calc_members(cycle_membership, name)
@@ -112,6 +112,12 @@ class MarkovModel():
             print('\nUtility\n')
             print(self._construct_table(self.results_['qaly'], self.state_names, self.results_['name']))
             print('\n')
+
+            for metric in ['cost', 'qaly']:
+                print(' \nAverage {}:'.format(metric))
+                for i, state in enumerate(self.state_names):
+                    state_mean = np.around(np.array(self.results_[metric])[:,i].mean(),2)
+                    print(' - {}: {}'.format(state, state_mean))
         else:
             return None
 
