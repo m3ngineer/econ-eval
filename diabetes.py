@@ -25,10 +25,10 @@ if __name__ == '__main__':
 
 
     markov = MarkovModel()
-    for treatment in ['soc']:
+    for treatment in ['45-60yo']:
         markov.set_states(STATES)
         markov.add_param('treatment', treatment_matrix[treatment], treatment)
         markov.add_param('cost', payoffs[treatment]['cost'], treatment)
         markov.add_param('utility', payoffs[treatment]['utility'], treatment)
-    m1 = markov.run(STATE_MEMBERSHIP, 'soc', CYCLES)
+    m1 = markov.run(STATE_MEMBERSHIP, '45-60yo', CYCLES)
     markov.score()
