@@ -1,25 +1,6 @@
 import numpy as np
 import pandas as pd
 
-CYCLES = 12
-STATE_MEMBERSHIP = [1000,0,0] # healthy, diseased, dead
-
-treatment_matrix = {
-    'a': [[0.7,0.2,0.1],
-            [0.2,0.6,0.2],
-            [0,0,1]],
-    'b': [[0.4,0.4,0.2],
-            [0.1,0.6,0.3],
-            [0,0,1]],
-}
-
-payoffs = {
-    'a': {'cost': [5000,12000,0],
-            'utility': [0.6,0.2,0]},
-    'b': {'cost': [4000,10000,0],
-            'utility': [0.8,0.5,0]},
-}
-
 class MarkovModel():
     ''' Instantiate a simple Markov Model '''
     def __init__(self):
@@ -28,6 +9,7 @@ class MarkovModel():
         self.payoffs = {}
         self.cycles = None
         self.results_ = None
+        self.tunnel_states = None
         self.state_names = self.set_states(['Healthy', 'Diseased', 'Dead'])
 
     def add_param(self, type, data, name):
@@ -43,8 +25,10 @@ class MarkovModel():
             if name not in self.payoffs.keys():
                 self.payoffs[name] = {}
             self.payoffs[name]['utility'] = data
+        elif type == 'tunnel_state':
+            self.tunnel_states[name] = date
         else:
-            raise('Option not available. Type should be treatment, cost, or utility.')
+            raise('Option not available. Type should be treatment, cost, utility, or tunnel_state.')
 
         return True
 
@@ -84,6 +68,7 @@ class MarkovModel():
                 'membership': outcome_membership,
                 'cost': outcome_cost,
                 'qaly': outcome_qaly,
+                'tunnel_states': self.tunnel_states,
                 }
         return self.results_
 
@@ -116,7 +101,7 @@ class MarkovModel():
             for metric in ['cost', 'qaly']:
                 print(' \nAverage {}:'.format(metric))
                 for i, state in enumerate(self.state_names):
-                    state_mean = np.around(np.array(self.results_[metric])[:,i].mean(),2)
+                    state_mean = np.around(np.array(self.results_[metric])[:,i].mean(), 2)
                     print(' - {}: {}'.format(state, state_mean))
         else:
             return None
@@ -138,6 +123,8 @@ if __name__ == '__main__':
     #aducanumab settings
     # https://link.springer.com/article/10.1007%2Fs40120-021-00273-0#Sec25
     # healthy, MCI due to AD, mild AD, moderate AD, severe AD
+
+
     treatment_matrix = {
         'soc': [[0.77,0.23,0,0],
                 [0.03,0.58,0.35,0.04],
@@ -149,23 +136,38 @@ if __name__ == '__main__':
     }
 
     # MCI, Mild AD dementia, moderate AD dementia, Severe AD dementia
-    payoffs = {
-        'soc': {'cost': [5000,12000,0],
+    params = {
+        'soc': {
+                'probabilities': [
+                        [0.77,0.23,0,0],
+                        [0.03,0.58,0.35,0.04],
+                        [0,0.03,0.55,0.42],
+                        [0,0,0.02,0.98]
+                    ],
+                'cost': [5000,12000,0],
                 'utility': [0.73,0.68,0.54,0.37]},
-        'aducanumab': {'cost': [34825,34825,34825,34825,34825],
-                'utility': [0.8,0.74,0.59,0.36,0.00]},
+        'aducanumab': {
+                'probabilities': [
+                        [0.77,0.23,0,0],
+                        [0.03,0.58,0.35,0.04],
+                        [0,0.03,0.55,0.42],
+                        [0,0,0.02,0.98]
+                    ],
+                'cost': [34825,34825,34825,34825,34825],
+                'utility': [0.8,0.74,0.59,0.36,0.00]
+                },
     }
     CYCLES = 10 #years
 
 
     markov = MarkovModel()
-    for treatment in ['a', 'b']:
-        markov.add_param('treatment', treatment_matrix[treatment], treatment)
-        markov.add_param('cost', payoffs[treatment]['cost'], treatment)
-        markov.add_param('utility', payoffs[treatment]['utility'], treatment)
-    m1 = markov.run(STATE_MEMBERSHIP, 'a', CYCLES)
+    for treatment in ['soc', 'aducanumab']:
+        markov.add_param('treatment', params[treatment]['probabilities'], treatment)
+        markov.add_param('cost', params[treatment]['cost'], treatment)
+        markov.add_param('utility', params[treatment]['utility'], treatment)
+    m1 = markov.run(STATE_MEMBERSHIP, 'soc', CYCLES)
     markov.score()
 
-    m2 = markov.run(STATE_MEMBERSHIP, 'b', CYCLES)
+    m2 = markov.run(STATE_MEMBERSHIP, 'aducanumab', CYCLES)
     # markov.score()
     print(markov.compare_treatments(m1, m2))
