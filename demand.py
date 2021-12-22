@@ -1,14 +1,25 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import sympy as sp
 
-demand1 = np.arange(1000,200,-125)
-price1 = np.arange(500,1200,100)
+def S(q):
+    return (q**2)
 
-demand2 = np.arange(1600,800,-125)
-price2 = np.arange(400,1100,100)
+def D(q):
+    return (q - 20)**2
 
-plt.plot(demand1, price1)
-plt.plot(demand2, price2)
+q = np.linspace(0, 16, 1000)
+
+plt.plot(q, S(q), label = "Supply Curve")
+plt.plot(q, D(q), label = "Demand Curve")
+plt.title("Supply and Demand")
+plt.legend(frameon = False)
+plt.xlabel("Quantity $q$")
+plt.ylabel("Price")
+
+q = sy.Symbol('q')
+eq = sy.Eq(S(q), D(q))
+sy.solve(eq)
 
 plt.show()
