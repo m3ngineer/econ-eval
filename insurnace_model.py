@@ -40,6 +40,8 @@ One explanation is that the actuarially fair premium does not include cost shari
 Notice that the actuarially fair premium does not include the out-of-pocket costs. The amount that the insurance company is expected to spend is the amount that is included in the actuarially fair premium.
 '''
 
+import numpy as np
+
 med_expenses = 15000
 cost_sharing = 0.1
 afp = med_expenses - (cost_sharing * med_expenses)
@@ -86,3 +88,32 @@ Yemane	5/10	11000	12000	16000
 Nelly	4/10	15000	17000	22000
 
 '''
+
+medical_spend = [6800,8000,9500,11000,15000]
+wtp_ppo = [7000,8500,10200,12000,17000]
+wtp_hmo = [7500,9500,13500,16000,22000]
+premium_ppo = 10000
+premium_hmo = 7000
+afp = np.mean(medical_spend)
+surplus = np.subtract(wtp_hmo,premium_hmo)
+print(surplus)
+
+
+
+''' Co-insurance '''
+# https://www.youtube.com/watch?v=A931E5IjE9I&ab_channel=MITOpenCourseWare
+import matplotlib.pyplot as plt
+
+# Market without insurance
+coi1 = 1 # coinsurnace rate
+coi2 = 0.2 # coinsurnace rate
+q_d = lambda p, coi: 200 - coi * p # demand for physicians visits
+q_s = lambda p: -100 +  p # market supply of physician visits
+
+x = np.arange(0,400)
+
+plt.plot(x, q_d(x, coi1), label='Demand Coinsurnace 100%', linewidth=2, color='green')
+plt.plot(x, q_d(x, coi2), label='Demand Coinsurnace 20%', linewidth=2, color='green')
+plt.plot(x, q_s(x), label='Supply', linewidth=2, color='blue')
+plt.legend()
+plt.show()
